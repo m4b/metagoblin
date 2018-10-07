@@ -7,9 +7,6 @@ extern crate theban_interval_tree;
 // we are extending the goblin api, so we export goblins types so
 // others will use it directly instead of depending on goblin + metagoblin
 pub use goblin::*;
-use goblin::elf::{ProgramHeader, SectionHeader};
-
-use theban_interval_tree::IntervalTree;
 
 type MRange = memrange::Range;
 
@@ -45,8 +42,8 @@ impl MetaData {
     }
 }
 
-impl<'a> From<&'a ProgramHeader> for MetaData {
-    fn from(phdr: &'a ProgramHeader) -> Self {
+impl<'a> From<&'a goblin::elf::ProgramHeader> for MetaData {
+    fn from(phdr: &'a goblin::elf::ProgramHeader) -> Self {
         use goblin::elf::program_header::*;
         use goblin::elf::program_header;
         let mut memory = None;
@@ -72,8 +69,8 @@ impl<'a> From<&'a ProgramHeader> for MetaData {
     }
 }
 
-impl<'a> From<&'a SectionHeader> for MetaData {
-    fn from(shdr: &'a SectionHeader) -> Self {
+impl<'a> From<&'a goblin::elf::SectionHeader> for MetaData {
+    fn from(shdr: &'a goblin::elf::SectionHeader) -> Self {
         use goblin::elf::section_header::*;
         let mut memory = None;
         let name = None;
@@ -142,14 +139,14 @@ impl ::std::fmt::Display for Permissions {
     }
 }
 
-impl<'a> From<&'a ProgramHeader> for Permissions {
-    fn from(phdr: &'a ProgramHeader) -> Self {
+impl<'a> From<&'a goblin::elf::ProgramHeader> for Permissions {
+    fn from(phdr: &'a goblin::elf::ProgramHeader) -> Self {
         Permissions::new(phdr.is_read(), phdr.is_write(), phdr.is_executable())
     }
 }
 
-impl<'a> From<&'a SectionHeader> for Permissions {
-    fn from(phdr: &'a SectionHeader) -> Self {
+impl<'a> From<&'a goblin::elf::SectionHeader> for Permissions {
+    fn from(phdr: &'a goblin::elf::SectionHeader) -> Self {
         Permissions::new(phdr.is_alloc(), phdr.is_writable(), phdr.is_executable())
     }
 }
@@ -171,14 +168,14 @@ impl Segment {
 
 #[derive(Debug)]
 pub struct Analysis {
-    pub franges: IntervalTree<MetaData>,
-    pub memranges: IntervalTree<MetaData>,
+    pub franges: theban_interval_tree::IntervalTree<MetaData>,
+    pub memranges: theban_interval_tree::IntervalTree<MetaData>,
 }
 
 impl Analysis {
     pub fn new<'a>(goblin: &Object<'a>) -> Self {
-        let mut franges = IntervalTree::new();
-        let mut memranges = IntervalTree::new();
+        let mut franges = theban_interval_tree::IntervalTree::new();
+        let mut memranges = theban_interval_tree::IntervalTree::new();
         match goblin {
             &Object::Elf(ref elf) => {
                 for phdr in &elf.program_headers {
