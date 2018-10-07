@@ -7,7 +7,6 @@ extern crate theban_interval_tree;
 // we are extending the goblin api, so we export goblins types so
 // others will use it directly instead of depending on goblin + metagoblin
 pub use goblin::*;
-use goblin::Object;
 use goblin::elf::{ProgramHeader, SectionHeader};
 
 use theban_interval_tree::IntervalTree;
@@ -177,11 +176,11 @@ pub struct Analysis {
 }
 
 impl Analysis {
-    pub fn new<'a>(goblin: &Object<'a>) -> Self {
+    pub fn new<'a>(goblin: &goblin::Object<'a>) -> Self {
         let mut franges = IntervalTree::new();
         let mut memranges = IntervalTree::new();
         match goblin {
-            &Object::Elf(ref elf) => {
+            &goblin::Object::Elf(ref elf) => {
                 for phdr in &elf.program_headers {
                     let range = phdr.file_range();
                     let vmrange = phdr.vm_range();
