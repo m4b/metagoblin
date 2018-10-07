@@ -176,11 +176,11 @@ pub struct Analysis {
 }
 
 impl Analysis {
-    pub fn new<'a>(goblin: &goblin::Object<'a>) -> Self {
+    pub fn new<'a>(goblin: &Object<'a>) -> Self {
         let mut franges = IntervalTree::new();
         let mut memranges = IntervalTree::new();
         match goblin {
-            &goblin::Object::Elf(ref elf) => {
+            &Object::Elf(ref elf) => {
                 for phdr in &elf.program_headers {
                     let range = phdr.file_range();
                     let vmrange = phdr.vm_range();
