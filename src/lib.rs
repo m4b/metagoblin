@@ -4,6 +4,9 @@ extern crate goblin;
 extern crate memrange;
 extern crate theban_interval_tree;
 
+// we are extending the goblin api, so we export goblins types so
+// others will use it directly instead of depending on goblin + metagoblin
+pub use goblin::*;
 use goblin::Object;
 use goblin::elf::{ProgramHeader, SectionHeader};
 
@@ -12,6 +15,7 @@ use theban_interval_tree::IntervalTree;
 type MRange = memrange::Range;
 
 #[derive(Debug, Clone)]
+/// Symbolically tags an address range in a binary
 pub enum Tag {
     Meta,
     // TODO: rename this to Load and/or specialize loaded segments
