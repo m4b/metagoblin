@@ -1,8 +1,5 @@
 #[macro_use]
 extern crate log;
-extern crate goblin;
-extern crate memrange;
-extern crate theban_interval_tree;
 
 // we are extending the goblin api, so we export goblins types so
 // others will use it directly instead of depending on goblin + metagoblin
@@ -44,8 +41,8 @@ impl MetaData {
 
 impl<'a> From<&'a goblin::elf::ProgramHeader> for MetaData {
     fn from(phdr: &'a goblin::elf::ProgramHeader) -> Self {
-        use goblin::elf::program_header::*;
         use goblin::elf::program_header;
+        use goblin::elf::program_header::*;
         let mut memory = None;
         let name = Some(program_header::pt_to_str(phdr.p_type).to_string());
         let tag = match phdr.p_type {
@@ -56,16 +53,12 @@ impl<'a> From<&'a goblin::elf::ProgramHeader> for MetaData {
             PT_LOAD => {
                 let permissions = Permissions::from(phdr);
                 let segment = Segment::new(permissions);
-                memory = Some (segment);
+                memory = Some(segment);
                 Tag::Code
             }
             _ => Tag::Unknown,
         };
-        MetaData {
-            name,
-            tag,
-            memory
-        }
+        MetaData { name, tag, memory }
     }
 }
 
@@ -83,22 +76,18 @@ impl<'a> From<&'a goblin::elf::SectionHeader> for MetaData {
             SHT_NOBITS => {
                 let permissions = Permissions::from(shdr);
                 let segment = Segment::new(permissions);
-                memory = Some (segment);
+                memory = Some(segment);
                 Tag::Zero
-            },
+            }
             SHT_PROGBITS | SHT_FINI_ARRAY | SHT_INIT_ARRAY => {
                 let permissions = Permissions::from(shdr);
                 let segment = Segment::new(permissions);
-                memory = Some (segment);
+                memory = Some(segment);
                 Tag::Code
             }
             _ => Tag::Unknown,
         };
-        MetaData {
-            name,
-            tag,
-            memory
-        }
+        MetaData { name, tag, memory }
     }
 }
 
@@ -183,7 +172,10 @@ impl Analysis {
                     let vmrange = phdr.vm_range();
                     let tag: MetaData = phdr.into();
                     debug!("{:?}", range);
-                    franges.insert(MRange::new(range.start as u64, range.end as u64), tag.clone());
+                    franges.insert(
+                        MRange::new(range.start as u64, range.end as u64),
+                        tag.clone(),
+                    );
                     memranges.insert(MRange::new(vmrange.start as u64, vmrange.end as u64), tag);
                 }
                 for shdr in &elf.section_headers {
@@ -196,10 +188,13 @@ impl Analysis {
                     // fixme
                     tag.name = elf.shdr_strtab.get_unsafe(shdr.sh_name).map(String::from);
                     debug!("{:?}", range);
-                    franges.insert(MRange::new(range.start as u64, range.end as u64), tag.clone());
+                    franges.insert(
+                        MRange::new(range.start as u64, range.end as u64),
+                        tag.clone(),
+                    );
                     memranges.insert(MRange::new(vmrange.start as u64, vmrange.end as u64), tag);
                 }
-            },
+            }
             _ => (),
         }
         Analysis { franges, memranges }
