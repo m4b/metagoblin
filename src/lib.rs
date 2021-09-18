@@ -182,16 +182,17 @@ impl Analysis {
                     if shdr.sh_size == 0 {
                         continue;
                     }
-                    let range = shdr.file_range();
                     let vmrange = shdr.vm_range();
                     let mut tag = MetaData::from(shdr);
                     // fixme
                     tag.name = elf.shdr_strtab.get_unsafe(shdr.sh_name).map(String::from);
-                    debug!("{:?}", range);
-                    franges.insert(
-                        MRange::new(range.start as u64, range.end as u64),
-                        tag.clone(),
-                    );
+                    if let Some(range) = shdr.file_range() {
+                        debug!("{:?}", range);
+                        franges.insert(
+                            MRange::new(range.start as u64, range.end as u64),
+                            tag.clone(),
+                        );
+                    }
                     memranges.insert(MRange::new(vmrange.start as u64, vmrange.end as u64), tag);
                 }
             }
