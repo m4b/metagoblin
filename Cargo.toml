@@ -8,7 +8,7 @@ repository = "https://github.com/m4b/metagoblin"
 documentation = "https://docs.rs/metagoblin"
 description = "Generates metadata for a binary format using goblin"
 include = ["src/**/*", "Cargo.toml", "LICENSE", "README.md"]
-edition = "2018"
+edition = "2021"
 
 [dependencies]
 goblin = { version = "0.5" }
