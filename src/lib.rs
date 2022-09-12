@@ -1,11 +1,37 @@
-#[macro_use]
-extern crate log;
+use log::*;
 
 // we are extending the goblin api, so we export goblins types so
 // others will use it directly instead of depending on goblin + metagoblin
 pub use goblin::*;
 
-type MRange = memrange::Range;
+#[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd)]
+/// A range of memory
+pub struct MRange {
+    /// The start
+    pub min: u64,
+    /// The end
+    pub max: u64,
+}
+
+impl MRange {
+    fn new(start: u64, end: u64) -> Self {
+        Self {
+            min: start,
+            max: end,
+        }
+    }
+
+    /// Return the length of this range
+    pub fn len(&self) -> u64 {
+        self.max.saturating_sub(self.min)
+    }
+}
+
+impl From<(u64, u64)> for MRange {
+    fn from(range: (u64, u64)) -> Self {
+        Self::new(range.0, range.1)
+    }
+}
 
 #[derive(Debug, Clone)]
 /// Symbolically tags an address range in a binary
@@ -157,14 +183,14 @@ impl Segment {
 
 #[derive(Debug)]
 pub struct Analysis {
-    pub franges: theban_interval_tree::IntervalTree<MetaData>,
-    pub memranges: theban_interval_tree::IntervalTree<MetaData>,
+    pub franges: Vec<(MRange, MetaData)>,
+    pub memranges: Vec<(MRange, MetaData)>,
 }
 
 impl Analysis {
     pub fn new<'a>(goblin: &Object<'a>) -> Self {
-        let mut franges = theban_interval_tree::IntervalTree::new();
-        let mut memranges = theban_interval_tree::IntervalTree::new();
+        let mut franges = Vec::default();
+        let mut memranges = Vec::default();
         match goblin {
             &Object::Elf(ref elf) => {
                 for phdr in &elf.program_headers {
@@ -172,11 +198,8 @@ impl Analysis {
                     let vmrange = phdr.vm_range();
                     let tag: MetaData = phdr.into();
                     debug!("{:?}", range);
-                    franges.insert(
-                        MRange::new(range.start as u64, range.end as u64),
-                        tag.clone(),
-                    );
-                    memranges.insert(MRange::new(vmrange.start as u64, vmrange.end as u64), tag);
+                    franges.push(((range.start as u64, range.end as u64).into(), tag.clone()));
+                    memranges.push(((vmrange.start as u64, vmrange.end as u64).into(), tag));
                 }
                 for shdr in &elf.section_headers {
                     if shdr.sh_size == 0 {
@@ -188,12 +211,9 @@ impl Analysis {
                     tag.name = elf.shdr_strtab.get_unsafe(shdr.sh_name).map(String::from);
                     if let Some(range) = shdr.file_range() {
                         debug!("{:?}", range);
-                        franges.insert(
-                            MRange::new(range.start as u64, range.end as u64),
-                            tag.clone(),
-                        );
+                        franges.push(((range.start as u64, range.end as u64).into(), tag.clone()));
                     }
-                    memranges.insert(MRange::new(vmrange.start as u64, vmrange.end as u64), tag);
+                    memranges.push(((vmrange.start as u64, vmrange.end as u64).into(), tag).into());
                 }
             }
             _ => (),
